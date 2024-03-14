@@ -5,8 +5,21 @@ from scipy import special
 from itertools import combinations_with_replacement
 from collections import Counter
 
-# Construct combinatorial products, e.g. [[1,1],[x,y],[x^2,y^2]] --> [1,x,y,x^2, xy, y^2]
-def make_combinatorial_products(x): #x.shape = (n+1, d) + x.shape[2:] --> ndarray of shape (comb(n+d,d)) + x.shape[2:]
+def make_combinatorial_products(x):
+    """
+    Generate combinatorial products based on the input array x, useful for constructing polynomial feature spaces.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Input array of shape (n+1, d) + x.shape[2:], where n is the polynomial degree and d is the dimension.
+
+    Returns
+    -------
+    np.ndarray
+        Array of combinatorial products with shape (comb(n+d, d),) + x.shape[2:].
+    """
+
   d=x.shape[1]
   n=x.shape[0]-1
   output=np.ones((comb(n+d,d, exact = True),) + x.shape[2:], dtype=x.dtype)
@@ -16,8 +29,27 @@ def make_combinatorial_products(x): #x.shape = (n+1, d) + x.shape[2:] --> ndarra
       output[i]=output[i]*x[temp[j],j-1]
   return output
 
-# Construct V_n^X using the exponential kernel exp((x-b)^T (y-b) / sigma^2) and the orthogonal basis in Example 7.1
-def constV_exp(X,p,n,sigma, b=None): #p.shape=b.shape=(d,1) X.shape=(d,n1,...,nr)
+def constV_exp(X, p, n, sigma, b=None):
+    """
+    Construct V^n_X using the exponential kernel for given data points, a center point, and a bandwidth.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data points of shape (d, n1, ..., nr).
+    p, b : np.ndarray
+        Center point of shape (d, 1). If b is None, b is set to p.
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the exponential kernel.
+
+    Returns
+    -------
+    np.ndarray
+        Constructed V^n_X array with shape (comb(n+d, d),) + X.shape[1:].
+    """
+
   d=X.shape[0]
   if b is None: #if b is omitted, we set b = p
     b=p
@@ -28,8 +60,28 @@ def constV_exp(X,p,n,sigma, b=None): #p.shape=b.shape=(d,1) X.shape=(d,n1,...,nr
   V_nonflat*=np.exp((2*X.T - p.T - b.T)*(p-b).T/(2*sigma**2)).T
   return make_combinatorial_products(V_nonflat) #shape = (comb(n+d,d),) +  X.shape[1:]
 
-# Construct W_n^{X,Y} using the exponential kernel exp((x-b)^T (y-b) / sigma^2) and the orthogonal basis in Example 7.1
-def constW_exp(X, Y, p, n, sigma, b=None): #p.shape=(d,1), X.shape=Y.shape = (d,n1,...,nr)
+def constW_exp(X, Y, p, n, sigma, b=None):
+    """
+    Construct W^n_{X,Y} using the exponential kernel for given data points, output points, a center point, degree, and bandwidth.
+
+    Parameters
+    ----------
+    X, Y : np.ndarray
+        Data points and output points of shape (d, n1, ..., nr).
+    p : np.ndarray
+        Center point of shape (d, 1).
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the exponential kernel.
+    b : np.ndarray, optional
+        Base point for the kernel, defaults to p if None.
+
+    Returns
+    -------
+    np.ndarray
+        Constructed W^n_{X,Y} array.
+    """
   d=X.shape[0]
   if b is None: #if b is omitted, we set b = p
     b=p
@@ -52,8 +104,29 @@ def constW_exp(X, Y, p, n, sigma, b=None): #p.shape=(d,1), X.shape=Y.shape = (d,
     temp[:,j] = np.copy(V_nonflat[:,j])
   return W
 
-# Construct \partial V_n^X using the exponential kernel exp((x-b)^T (y-b) / sigma^2) and the orthogonal basis in Example 7.1
-def constDV_exp(X, p, n, sigma, b=None): #p.shape=(d,1), X.shape=Y.shape = (d,n1,...,nr)
+def constDV_exp(X, p, n, sigma, b=None):
+    """
+    Construct the derivative of V^n_X using the exponential kernel.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data points of shape (d, n1, ..., nr).
+    p : np.ndarray
+        Center point of shape (d, 1).
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the exponential kernel.
+    b : np.ndarray, optional
+        Base point for the kernel, defaults to p if None.
+
+    Returns
+    -------
+    np.ndarray
+        Derivative of V^n_X array.
+    """
+
   d=X.shape[0]
   if b is None: #if b is omitted, we set b = p
     b=p
@@ -76,8 +149,27 @@ def constDV_exp(X, p, n, sigma, b=None): #p.shape=(d,1), X.shape=Y.shape = (d,n1
     temp[:,j] = np.copy(V_nonflat[:,j])
   return W
 
-# Construct V_n^X using the Gaussian kernel exp(|x-y|^2 / 2sigma^2) and the orthogonal basis in Example 7.2
-def constV_gauss(X,p,n,sigma, *arg): #p.shape=(dim,)
+def constV_gauss(X, p, n, sigma, *arg):
+    """
+    Construct V^n_X using the Gaussian kernel.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data points of shape (d, n1, ..., nr).
+    p : np.ndarray
+        Center point of shape (dim,).
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the Gaussian kernel.
+
+    Returns
+    -------
+    np.ndarray
+        Constructed V^n_X array.
+    """
+
   d=X.shape[0]
   V_nonflat=np.ones((n+1,) + X.shape)
   factor=((X.T-p.T)/sigma).T
@@ -86,8 +178,27 @@ def constV_gauss(X,p,n,sigma, *arg): #p.shape=(dim,)
   V_nonflat*=np.exp((-factor**2).T/2).T
   return make_combinatorial_products(V_nonflat)
 
-# Construct W_n^{X,Y} using the Gaussian kernel exp(|x-y|^2 / 2sigma^2) and the orthogonal basis in Example 7.2
 def constW_gauss(X, Y, p, n, sigma, *arg):
+    """
+    Construct W^n_{X,Y} using the Gaussian kernel.
+
+    Parameters
+    ----------
+    X, Y : np.ndarray
+        Data points and output points.
+    p : np.ndarray
+        Center point.
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the Gaussian kernel.
+
+    Returns
+    -------
+    np.ndarray
+        Constructed W^n_{X,Y} array.
+    """
+
   d=X.shape[0]
   V_nonflat=np.ones((n+2,) + X.shape)
   dV_nonflat=np.zeros((n+1,) + X.shape)
@@ -106,8 +217,27 @@ def constW_gauss(X, Y, p, n, sigma, *arg):
     temp[:,j] = np.copy(V_nonflat[:n+1,j])
   return W
 
-# Construct nabla of V_n^X using the Gaussian kernel exp(|x-y|^2 / 2sigma^2) and the orthogonal basis in Example 7.2
 def constDV_gauss(X, p, n, sigma, *arg):
+    """
+    Construct the derivative of V^n_X using the Gaussian kernel.
+
+    Parameters
+    ----------
+    X : np.ndarray
+        Data points.
+    p : np.ndarray
+        Center point.
+    n : int
+        Degree of the polynomial space.
+    sigma : float
+        Bandwidth of the Gaussian kernel.
+
+    Returns
+    -------
+    np.ndarray
+        Derivative of V^n_X array.
+    """
+
   d=X.shape[0]
   V_nonflat=np.ones((n+2,) + X.shape)
   dV_nonflat=np.zeros((n+1,) + X.shape)
@@ -126,8 +256,29 @@ def constDV_gauss(X, p, n, sigma, *arg):
     temp[:,j] = np.copy(V_nonflat[:n+1,j])
   return dV
   
-# Computation of G_{ij} using the Hermite-Gaussian quadrature
-def make_Gs(n,ps,sigma,b=None,deg=20):
+def make_Gs(n, ps, sigma, b=None, deg=20):
+    """
+    Compute G_{ij} matrices using Hermite-Gaussian quadrature.
+
+    Parameters
+    ----------
+    n : int
+        Degree of the polynomial space.
+    ps : np.ndarray
+        Points at which G matrices are computed.
+    sigma : float
+        Bandwidth parameter.
+    b : np.ndarray, optional
+        Base point for the kernel, defaults to zeros if None.
+    deg : int, optional
+        Degree of the Hermite-Gaussian quadrature.
+
+    Returns
+    -------
+    np.ndarray
+        Computed G_{ij} matrices.
+    """
+
   d=ps.shape[0]
   r=ps.shape[1]
   if b==None:
@@ -149,8 +300,25 @@ def make_Gs(n,ps,sigma,b=None,deg=20):
     output *= ((temp.dot(w)).dot(w)).real/np.pi
   return output
 
-# Computation of Jacobian matrix
-def jacmat(x, f, epsilon=1e-7): #x.shape = (d,N)
+def jacmat(x, f, epsilon=1e-7):
+    """
+    Compute the Jacobian matrix of a function f at points x.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Points at which to compute the Jacobian, shape (d, N).
+    f : function
+        Function for which the Jacobian is computed.
+    epsilon : float, optional
+        Perturbation for finite differences.
+
+    Returns
+    -------
+    np.ndarray
+        Jacobian matrix of f at x, shape (N, d, d).
+    """
+
     d=x.shape[0]
     N=x.shape[1]
     output = np.zeros((d,d,N))
