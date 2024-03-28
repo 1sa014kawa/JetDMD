@@ -147,7 +147,7 @@ def constDV_exp(X, p, n, sigma, b=None):
         temp[:,j] = np.copy(dV_nonflat[:,j])
         dV[j] = make_combinatorial_products(temp)
         temp[:,j] = np.copy(V_nonflat[:,j])
-    return W
+    return dV
 
 def constV_gauss(X, p, n, sigma, *arg):
     """
