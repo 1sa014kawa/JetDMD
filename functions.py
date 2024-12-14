@@ -329,3 +329,12 @@ def jacmat(x, f, epsilon=1e-7):
         output[:,i] = np.sum(np.array([c*f(x + (i-2)*epsilon*e) for i,c in enumerate(fd_coef)]), axis=0)/(12*epsilon)
         e[i,0] = 0.0
     return output.transpose(2,0,1) #shape of output is (N,d,d)
+
+import sys
+
+def data_projection(X,Y,n=1):
+    if X.shape[0] - n >= Y.shape[0]:
+        _, _, V = np.linalg.svd(X[-n:], full_matrices=False)
+        P = V.T@V
+        return X[:-n] - X[:-n]@P, Y - Y@P
+    # return X, Y

@@ -279,6 +279,12 @@ class Linear(TrajectoryGenerator): #linear
     def vector_field(self, x):
         return (x.T@(self.A.T)).T
 
+class Lorenz96(TrajectoryGenerator):
+    def __init__(self, F=8):
+        super().__init__()
+        self.F = F
+    def vector_field(self, x):
+        return (np.roll(x,-1,axis=0) - np.roll(x,2,axis=0))*np.roll(x,1,axis=0) - x + self.F
 
 
 
