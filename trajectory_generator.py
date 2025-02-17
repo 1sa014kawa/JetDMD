@@ -210,7 +210,7 @@ class FitzHughNagumo(TrajectoryGenerator): #FitzHugh-Nagumo equation
         self.R=R
         self.I=I
     def vector_field(self, x): #(2,*) --> (2,*)
-        return np.array([x[0] - x[0]**3/3 - x[1] + self.R*self.I \
+        return np.array([x[0] - x[0]**3/3 - x[1] + self.R*self.I, \
                                      (x[0] + self.a - self.b*x[1])/self.tau])
 
 class Lorenz(TrajectoryGenerator): #Lorenz attractor
@@ -285,6 +285,15 @@ class Lorenz96(TrajectoryGenerator):
         self.F = F
     def vector_field(self, x):
         return (np.roll(x,-1,axis=0) - np.roll(x,2,axis=0))*np.roll(x,1,axis=0) - x + self.F
+
+class Cusp_catastrophe(TrajectoryGenerator):
+    def __init__(self, a,b):
+        super().__init__()
+        self.a = a
+        self.b = b
+    def vector_felds(self, x):
+        return np.array([x**4 + self.a*x**2 + self.b* x])
+
 
 
 
