@@ -151,7 +151,7 @@ class TrajectoryGenerator():
         N = int(abs(t)/h)
         y = np.zeros_like(x)
         k = np.zeros((4,) + x.shape)
-        for _ in range(N-1):
+        for _ in range(N):
             x = self._step_forward(x, self.vector_field, h, sign, y=y, k=k)
         return x
         
@@ -294,6 +294,13 @@ class Cusp_catastrophe(TrajectoryGenerator):
     def vector_felds(self, x):
         return np.array([x**4 + self.a*x**2 + self.b* x])
 
+class DiscreteBurgers(TrajectoryGenerator): #周期境界の離散Burgers方程式
+    def __init__(self, nu=0.02, w=0.1):
+        super().__init__()
+        self.nu = nu
+        self.w = w
+    def vector_field(self, x):
+        return -(np.roll(x,-1,axis=0) - np.roll(x,1,axis=0)) * x/(2 * self.w) + self.nu * (np.roll(x,-1,axis=0) + np.roll(x,1,axis=0) - 2*x)/self.w**2
 
 
 
